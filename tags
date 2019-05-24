@@ -1,0 +1,33 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AlexNet	src/net.py	/^class AlexNet(nn.Module):$/;"	c
+DataPrefetcher	src/datasets.py	/^class DataPrefetcher:$/;"	c
+Datasets	src/datasets.py	/^class Datasets:$/;"	c
+LeNet	src/net.py	/^class LeNet(nn.Module):$/;"	c
+Net	src/net.py	/^class Net:$/;"	c
+ResNet18	src/net.py	/^class ResNet18(nn.Module):$/;"	c
+__init__	src/datasets.py	/^    def __init__(self, config):$/;"	m	class:Datasets
+__init__	src/datasets.py	/^    def __init__(self, loader: DataLoader, mean: list, std: list):$/;"	m	class:DataPrefetcher
+__init__	src/net.py	/^    def __init__(self, config):$/;"	m	class:mnistNetwork
+__init__	src/net.py	/^    def __init__(self, config, input_channel, output_channel, input_resolution):$/;"	m	class:Net
+__init__	src/net.py	/^    def __init__(self, config, input_dim, output_dim, input_resolution):$/;"	m	class:ResNet18
+__init__	src/net.py	/^    def __init__(self, input_channel, output_channel):$/;"	m	class:AlexNet
+__init__	src/net.py	/^    def __init__(self, input_channel=32, output_channel=10):$/;"	m	class:LeNet
+_get_model	src/net.py	/^    def _get_model(self):$/;"	m	class:Net
+_load_mnist	src/datasets.py	/^    def _load_mnist(self):$/;"	m	class:Datasets
+_weight_initialize	src/net.py	/^    def _weight_initialize(self):$/;"	m	class:Net
+forward	src/net.py	/^    def forward(self, x):$/;"	m	class:AlexNet
+forward	src/net.py	/^    def forward(self, x):$/;"	m	class:LeNet
+forward	src/net.py	/^    def forward(self, x):$/;"	m	class:ResNet18
+forward	src/net.py	/^    def forward(self, x):$/;"	m	class:mnistNetwork
+get_embedding	src/net.py	/^    def get_embedding(self, x):$/;"	m	class:ResNet18
+get_model	src/net.py	/^    def get_model(self):$/;"	m	class:Net
+load_data	src/datasets.py	/^    def load_data(self):$/;"	m	class:Datasets
+mnistNetwork	src/net.py	/^class mnistNetwork(nn.Module):$/;"	c
+next	src/datasets.py	/^    def next(self):$/;"	m	class:DataPrefetcher
+preload	src/datasets.py	/^    def preload(self):$/;"	m	class:DataPrefetcher
+print_model	src/net.py	/^    def print_model(self, input_size):$/;"	m	class:Net
