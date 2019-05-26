@@ -3,31 +3,23 @@
 !_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
-!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-AlexNet	src/net.py	/^class AlexNet(nn.Module):$/;"	c
+!_TAG_PROGRAM_VERSION	5.8	//
+DataLoader	src/datasets.py	/^from torch.utils.data import DataLoader$/;"	i
 DataPrefetcher	src/datasets.py	/^class DataPrefetcher:$/;"	c
 Datasets	src/datasets.py	/^class Datasets:$/;"	c
-LeNet	src/net.py	/^class LeNet(nn.Module):$/;"	c
-Net	src/net.py	/^class Net:$/;"	c
-ResNet18	src/net.py	/^class ResNet18(nn.Module):$/;"	c
+MNISTNetwork	src/net.py	/^class MNISTNetwork(nn.Module):$/;"	c
 __init__	src/datasets.py	/^    def __init__(self, config):$/;"	m	class:Datasets
 __init__	src/datasets.py	/^    def __init__(self, loader: DataLoader, mean: list, std: list):$/;"	m	class:DataPrefetcher
-__init__	src/net.py	/^    def __init__(self, config):$/;"	m	class:mnistNetwork
-__init__	src/net.py	/^    def __init__(self, config, input_channel, output_channel, input_resolution):$/;"	m	class:Net
-__init__	src/net.py	/^    def __init__(self, config, input_dim, output_dim, input_resolution):$/;"	m	class:ResNet18
-__init__	src/net.py	/^    def __init__(self, input_channel, output_channel):$/;"	m	class:AlexNet
-__init__	src/net.py	/^    def __init__(self, input_channel=32, output_channel=10):$/;"	m	class:LeNet
-_get_model	src/net.py	/^    def _get_model(self):$/;"	m	class:Net
+__init__	src/net.py	/^    def __init__(self, config: dict):$/;"	m	class:MNISTNetwork
 _load_mnist	src/datasets.py	/^    def _load_mnist(self):$/;"	m	class:Datasets
-_weight_initialize	src/net.py	/^    def _weight_initialize(self):$/;"	m	class:Net
-forward	src/net.py	/^    def forward(self, x):$/;"	m	class:AlexNet
-forward	src/net.py	/^    def forward(self, x):$/;"	m	class:LeNet
-forward	src/net.py	/^    def forward(self, x):$/;"	m	class:ResNet18
-forward	src/net.py	/^    def forward(self, x):$/;"	m	class:mnistNetwork
-get_embedding	src/net.py	/^    def get_embedding(self, x):$/;"	m	class:ResNet18
-get_model	src/net.py	/^    def get_model(self):$/;"	m	class:Net
+forward	src/net.py	/^    def forward(self, x):$/;"	m	class:MNISTNetwork
+get_ari	src/action.py	/^def get_ari(y_true, y_pred):$/;"	f
+get_nmi	src/action.py	/^def get_nmi(y_ture, y_pred):$/;"	f
 load_data	src/datasets.py	/^    def load_data(self):$/;"	m	class:Datasets
-mnistNetwork	src/net.py	/^class mnistNetwork(nn.Module):$/;"	c
+metrics	src/action.py	/^from sklearn import metrics$/;"	i
 next	src/datasets.py	/^    def next(self):$/;"	m	class:DataPrefetcher
+nn	src/net.py	/^import torch.nn as nn$/;"	i
 preload	src/datasets.py	/^    def preload(self):$/;"	m	class:DataPrefetcher
-print_model	src/net.py	/^    def print_model(self, input_size):$/;"	m	class:Net
+sys	src/datasets.py	/^import sys$/;"	i
+torch	src/datasets.py	/^import torch$/;"	i
+torch	src/net.py	/^import torch.nn as nn$/;"	i
