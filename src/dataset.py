@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 
 
-class Datasets:
+class Dataset:
     """Datasets to organize data and load"""
     def __init__(self, config):
         self.config = config

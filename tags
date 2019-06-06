@@ -3,23 +3,62 @@
 !_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
-!_TAG_PROGRAM_VERSION	5.8	//
-DataLoader	src/datasets.py	/^from torch.utils.data import DataLoader$/;"	i
-DataPrefetcher	src/datasets.py	/^class DataPrefetcher:$/;"	c
-Datasets	src/datasets.py	/^class Datasets:$/;"	c
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Action	src/action.py	/^class Action:$/;"	c
+Agent	src/agent.py	/^class Agent:$/;"	c
+Config	src/config.py	/^class Config:$/;"	c
+DataPrefetcher	src/dataset.py	/^class DataPrefetcher:$/;"	c
+Dataset	src/dataset.py	/^class Dataset:$/;"	c
 MNISTNetwork	src/net.py	/^class MNISTNetwork(nn.Module):$/;"	c
-__init__	src/datasets.py	/^    def __init__(self, config):$/;"	m	class:Datasets
-__init__	src/datasets.py	/^    def __init__(self, loader: DataLoader, mean: list, std: list):$/;"	m	class:DataPrefetcher
+Net	src/net.py	/^class Net:$/;"	c
+_HungarianState	ref/linear_assignment_.py	/^class _HungarianState:$/;"	c
+__init__	ref/linear_assignment_.py	/^    def __init__(self, cost_matrix):$/;"	m	class:_HungarianState
+__init__	src/action.py	/^    def __init__(self, config: dict):$/;"	m	class:Action
+__init__	src/agent.py	/^    def __init__(self):$/;"	m	class:Agent
+__init__	src/config.py	/^    def __init__(self):$/;"	m	class:Config
+__init__	src/dataset.py	/^    def __init__(self, config):$/;"	m	class:Dataset
+__init__	src/dataset.py	/^    def __init__(self, loader: DataLoader, mean: list, std: list):$/;"	m	class:DataPrefetcher
 __init__	src/net.py	/^    def __init__(self, config: dict):$/;"	m	class:MNISTNetwork
-_load_mnist	src/datasets.py	/^    def _load_mnist(self):$/;"	m	class:Datasets
+__init__	src/net.py	/^    def __init__(self, config: dict):$/;"	m	class:Net
+_add_default_setting	src/config.py	/^    def _add_default_setting(self):$/;"	m	class:Config
+_add_special_setting	src/config.py	/^    def _add_special_setting(self):$/;"	m	class:Config
+_clear_covers	ref/linear_assignment_.py	/^    def _clear_covers(self):$/;"	m	class:_HungarianState
+_hungarian	ref/linear_assignment_.py	/^def _hungarian(cost_matrix):$/;"	f
+_init_model	src/net.py	/^    def _init_model(self):$/;"	m	class:Net
+_load_default_setting	src/config.py	/^    def _load_default_setting(self):$/;"	m	class:Config
+_load_mnist	src/dataset.py	/^    def _load_mnist(self):$/;"	m	class:Dataset
+_load_necessary	src/config.py	/^    def _load_necessary(self):$/;"	m	class:Config
+_load_special_setting	src/config.py	/^    def _load_special_setting(self):$/;"	m	class:Config
+_run	src/agent.py	/^    def _run(self, train_loader, val_loader, model, loss_fn, optimizer):$/;"	m	class:Agent
+_set_environment	src/agent.py	/^    def _set_environment(self):$/;"	m	class:Agent
+_step1	ref/linear_assignment_.py	/^def _step1(state):$/;"	f
+_step3	ref/linear_assignment_.py	/^def _step3(state):$/;"	f
+_step4	ref/linear_assignment_.py	/^def _step4(state):$/;"	f
+_step5	ref/linear_assignment_.py	/^def _step5(state):$/;"	f
+_step6	ref/linear_assignment_.py	/^def _step6(state):$/;"	f
+eval_epoch	src/action.py	/^    def eval_epoch(self, loader, model, loss_fn, optimizer, device):$/;"	m	class:Action
 forward	src/net.py	/^    def forward(self, x):$/;"	m	class:MNISTNetwork
+gcollect	src/action.py	/^def gcollect(func, *args, **kwargs):$/;"	f
+get_acc	src/action.py	/^def get_acc(y_true: np.ndarray, y_pred: np.ndarray):$/;"	f
 get_ari	src/action.py	/^def get_ari(y_true, y_pred):$/;"	f
-get_nmi	src/action.py	/^def get_nmi(y_ture, y_pred):$/;"	f
-load_data	src/datasets.py	/^    def load_data(self):$/;"	m	class:Datasets
-metrics	src/action.py	/^from sklearn import metrics$/;"	i
-next	src/datasets.py	/^    def next(self):$/;"	m	class:DataPrefetcher
-nn	src/net.py	/^import torch.nn as nn$/;"	i
-preload	src/datasets.py	/^    def preload(self):$/;"	m	class:DataPrefetcher
-sys	src/datasets.py	/^import sys$/;"	i
-torch	src/datasets.py	/^import torch$/;"	i
-torch	src/net.py	/^import torch.nn as nn$/;"	i
+get_config	src/config.py	/^    def get_config(self):$/;"	m	class:Config
+get_distance	src/action.py	/^    def get_distance(self, features, threshold):$/;"	m	class:Action
+get_loss_fn	src/action.py	/^    def get_loss_fn(self):$/;"	m	class:Action
+get_metrics	src/action.py	/^def get_metrics(y_true: np.ndarray, y_pred: np.ndarray):$/;"	f
+get_model	src/net.py	/^    def get_model(self):$/;"	m	class:Net
+get_nmi	src/action.py	/^def get_nmi(y_true, y_pred):$/;"	f
+get_optimizer	src/action.py	/^    def get_optimizer(self, model):$/;"	m	class:Action
+linear_assignment	ref/linear_assignment_.py	/^def linear_assignment(X):$/;"	f
+load_data	src/dataset.py	/^    def load_data(self):$/;"	m	class:Dataset
+next	src/dataset.py	/^    def next(self):$/;"	m	class:DataPrefetcher
+plot_loss	src/action.py	/^    def plot_loss(self, tag, loss, epoch, writter):$/;"	m	class:Action
+plot_metrics	src/action.py	/^    def plot_metrics(self, tags: list, metrics: dict, epoch: int, writter):$/;"	m	class:Action
+preload	src/dataset.py	/^    def preload(self):$/;"	m	class:DataPrefetcher
+print_config	src/config.py	/^    def print_config(self):$/;"	m	class:Config
+print_model	src/net.py	/^    def print_model(self, input_size):$/;"	m	class:Net
+run	src/agent.py	/^    def run(self):$/;"	m	class:Agent
+str2bool	src/action.py	/^def str2bool(val):$/;"	f
+time_this	src/action.py	/^def time_this(func, *args, **kwargs):$/;"	f
+train_epoch	src/action.py	/^    def train_epoch(self, loader, model, loss_fn, optimizer, device):$/;"	m	class:Action
+wrapper	src/action.py	/^    def wrapper(*args, **kwargs):$/;"	f	function:gcollect
+wrapper	src/action.py	/^    def wrapper(*args, **kwargs):$/;"	f	function:time_this
