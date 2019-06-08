@@ -1,11 +1,12 @@
 """Config"""
 
 import argparse
-import sys
 
-from action import str2bool
+#from action import str2bool
 
 class Config:
+    """Config
+    """
     def __init__(self):
         """
         parser: to read all config
@@ -19,14 +20,17 @@ class Config:
 
     def _load_necessary(self):
         """load necessary part in config"""
-        self.args = self.parser.parse_args()
         self._add_default_setting()
+        self._add_special_setting()
+        self.args = self.parser.parse_args()
         self._load_default_setting()
+        self._load_special_setting()
 
     def _load_default_setting(self):
         """Load default setting from Parser"""
         self.config['experiment_index'] = self.args.experiment_index
         self.config['cuda'] = self.args.cuda
+        self.config["num_workers"] = self.args.num_workers
 
         self.config['dataset'] = self.args.dataset
 
@@ -42,6 +46,7 @@ class Config:
 
     def _load_special_setting(self):
         self.config["upper_threshold"] = self.args.upper_threshold
+        self.config["num_clusters"] = self.args.num_clusters
 
     def _add_default_setting(self):
         # need defined each time
@@ -49,6 +54,8 @@ class Config:
                                  help="001, 002, ...")
         self.parser.add_argument('--cuda', default='0',
                                  help="cuda visible device")
+        self.parser.add_argument("--num_workers", default=2, type=int,
+                                 help="num_workers of dataloader")
 
         self.parser.add_argument('--dataset', default="mnist", type=str,
                                  help="mnist, cifar10, cifar100")
@@ -72,9 +79,10 @@ class Config:
                                  type=str, help='store models, ../saved/models')
 
     def _add_special_setting(self):
-        self.parser.add_argument("upper_threshold", default=0.9, type=float,
+        self.parser.add_argument("--upper_threshold", default=0.9, type=float,
                                  help="init upper threshold")
-
+        self.parser.add_argument("--num_clusters", default=10, type=int,
+                                 help="numbers of clusters")
 
     def print_config(self):
         """print config

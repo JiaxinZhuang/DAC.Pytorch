@@ -3,16 +3,26 @@
 !_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
-!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+!_TAG_PROGRAM_VERSION	5.8	//
 Action	src/action.py	/^class Action:$/;"	c
+Action	src/agent.py	/^from action import Action, time_this$/;"	i
 Agent	src/agent.py	/^class Agent:$/;"	c
+Agent	src/main.py	/^from agent import Agent$/;"	i
+AverageMeter	src/action.py	/^class AverageMeter:$/;"	c
+Config	src/agent.py	/^from config import Config$/;"	i
 Config	src/config.py	/^class Config:$/;"	c
+DataLoader	src/dataset.py	/^from torch.utils.data import DataLoader$/;"	i
 DataPrefetcher	src/dataset.py	/^class DataPrefetcher:$/;"	c
+Dataset	src/agent.py	/^from dataset import Dataset$/;"	i
 Dataset	src/dataset.py	/^class Dataset:$/;"	c
+F	src/action.py	/^import torch.nn.functional as F$/;"	i
 MNISTNetwork	src/net.py	/^class MNISTNetwork(nn.Module):$/;"	c
+Net	src/agent.py	/^from net import Net$/;"	i
 Net	src/net.py	/^class Net:$/;"	c
+SummaryWriter	src/agent.py	/^from tensorboardX import SummaryWriter$/;"	i
 _HungarianState	ref/linear_assignment_.py	/^class _HungarianState:$/;"	c
 __init__	ref/linear_assignment_.py	/^    def __init__(self, cost_matrix):$/;"	m	class:_HungarianState
+__init__	src/action.py	/^    def __init__(self):$/;"	m	class:AverageMeter
 __init__	src/action.py	/^    def __init__(self, config: dict):$/;"	m	class:Action
 __init__	src/agent.py	/^    def __init__(self):$/;"	m	class:Agent
 __init__	src/config.py	/^    def __init__(self):$/;"	m	class:Config
@@ -36,29 +46,73 @@ _step3	ref/linear_assignment_.py	/^def _step3(state):$/;"	f
 _step4	ref/linear_assignment_.py	/^def _step4(state):$/;"	f
 _step5	ref/linear_assignment_.py	/^def _step5(state):$/;"	f
 _step6	ref/linear_assignment_.py	/^def _step6(state):$/;"	f
-eval_epoch	src/action.py	/^    def eval_epoch(self, loader, model, loss_fn, optimizer, device):$/;"	m	class:Action
+argparse	src/config.py	/^import argparse$/;"	i
+eval_epoch	src/agent.py	/^    def eval_epoch(self, loader, model, loss_fn, threshold):$/;"	m	class:Agent
 forward	src/net.py	/^    def forward(self, x):$/;"	m	class:MNISTNetwork
+gc	src/action.py	/^import gc$/;"	i
 gcollect	src/action.py	/^def gcollect(func, *args, **kwargs):$/;"	f
 get_acc	src/action.py	/^def get_acc(y_true: np.ndarray, y_pred: np.ndarray):$/;"	f
 get_ari	src/action.py	/^def get_ari(y_true, y_pred):$/;"	f
 get_config	src/config.py	/^    def get_config(self):$/;"	m	class:Config
-get_distance	src/action.py	/^    def get_distance(self, features, threshold):$/;"	m	class:Action
+get_cos_similarity_by_threshold	src/action.py	/^    def get_cos_similarity_by_threshold(self, cos_dist_matrix, threshold):$/;"	m	class:Action
+get_cos_similarity_distance	src/action.py	/^    def get_cos_similarity_distance(self, features):$/;"	m	class:Action
+get_dataloader	src/dataset.py	/^    def get_dataloader(self):$/;"	m	class:Dataset
 get_loss_fn	src/action.py	/^    def get_loss_fn(self):$/;"	m	class:Action
-get_metrics	src/action.py	/^def get_metrics(y_true: np.ndarray, y_pred: np.ndarray):$/;"	f
+get_metrics	src/action.py	/^    def get_metrics(self, y_true: list, y_pred: list):$/;"	m	class:Action
 get_model	src/net.py	/^    def get_model(self):$/;"	m	class:Net
 get_nmi	src/action.py	/^def get_nmi(y_true, y_pred):$/;"	f
-get_optimizer	src/action.py	/^    def get_optimizer(self, model):$/;"	m	class:Action
+get_optimizer	src/action.py	/^    def get_optimizer(self, model, learning_rate: float):$/;"	m	class:Action
 linear_assignment	ref/linear_assignment_.py	/^def linear_assignment(X):$/;"	f
+linear_assignment	src/action.py	/^from linear_assignment_ import linear_assignment$/;"	i
 load_data	src/dataset.py	/^    def load_data(self):$/;"	m	class:Dataset
+load_dataloader	src/dataset.py	/^    def load_dataloader(self):$/;"	m	class:Dataset
+main	src/main.py	/^def main():$/;"	f
+math	src/net.py	/^import math$/;"	i
+metrics	src/action.py	/^import sklearn.metrics$/;"	i
 next	src/dataset.py	/^    def next(self):$/;"	m	class:DataPrefetcher
+nn	src/action.py	/^import torch.nn as nn$/;"	i
+nn	src/action.py	/^import torch.nn.functional as F$/;"	i
+nn	src/net.py	/^import torch.nn as nn$/;"	i
+np	ref/linear_assignment_.py	/^import numpy as np$/;"	i
+np	src/action.py	/^import numpy as np$/;"	i
+np	src/agent.py	/^import numpy as np$/;"	i
+os	src/action.py	/^import os$/;"	i
+os	src/agent.py	/^import os$/;"	i
 plot_loss	src/action.py	/^    def plot_loss(self, tag, loss, epoch, writter):$/;"	m	class:Action
 plot_metrics	src/action.py	/^    def plot_metrics(self, tags: list, metrics: dict, epoch: int, writter):$/;"	m	class:Action
 preload	src/dataset.py	/^    def preload(self):$/;"	m	class:DataPrefetcher
 print_config	src/config.py	/^    def print_config(self):$/;"	m	class:Config
 print_model	src/net.py	/^    def print_model(self, input_size):$/;"	m	class:Net
+reset	src/action.py	/^    def reset(self):$/;"	m	class:AverageMeter
+reset_parameters	src/net.py	/^    def reset_parameters(self):$/;"	m	class:Net
 run	src/agent.py	/^    def run(self):$/;"	m	class:Agent
+save_model	src/action.py	/^    def save_model(self, model, optimizer, epoch, metrics, last=False):$/;"	m	class:Action
+shutil	src/agent.py	/^import shutil$/;"	i
+sklearn	src/action.py	/^import sklearn$/;"	i
+sklearn	src/action.py	/^import sklearn.metrics$/;"	i
 str2bool	src/action.py	/^def str2bool(val):$/;"	f
+summary	src/net.py	/^from torchsummary import summary$/;"	i
+sys	src/action.py	/^import sys$/;"	i
+sys	src/agent.py	/^import sys$/;"	i
+sys	src/dataset.py	/^import sys$/;"	i
+sys	src/net.py	/^import sys$/;"	i
+time	src/action.py	/^import time$/;"	i
 time_this	src/action.py	/^def time_this(func, *args, **kwargs):$/;"	f
-train_epoch	src/action.py	/^    def train_epoch(self, loader, model, loss_fn, optimizer, device):$/;"	m	class:Action
+time_this	src/agent.py	/^from action import Action, time_this$/;"	i
+torch	src/action.py	/^import torch$/;"	i
+torch	src/action.py	/^import torch.nn as nn$/;"	i
+torch	src/action.py	/^import torch.nn.functional as F$/;"	i
+torch	src/agent.py	/^import torch$/;"	i
+torch	src/dataset.py	/^import torch$/;"	i
+torch	src/net.py	/^import torch$/;"	i
+torch	src/net.py	/^import torch.nn as nn$/;"	i
+torchvision	src/dataset.py	/^import torchvision$/;"	i
+tqdm	src/agent.py	/^from tqdm import tqdm$/;"	i
+train_epoch	src/agent.py	/^    def train_epoch(self, loader, model, loss_fn, optimizer, threshold):$/;"	m	class:Agent
+transforms	src/dataset.py	/^from torchvision import transforms$/;"	i
+update	src/action.py	/^    def update(self, val, n=1):$/;"	m	class:AverageMeter
+update_threshold	src/action.py	/^    def update_threshold(self, threshold: float, epoch: int):$/;"	m	class:Action
+warnings	ref/linear_assignment_.py	/^import warnings$/;"	i
 wrapper	src/action.py	/^    def wrapper(*args, **kwargs):$/;"	f	function:gcollect
 wrapper	src/action.py	/^    def wrapper(*args, **kwargs):$/;"	f	function:time_this
+wraps	src/action.py	/^from functools import wraps$/;"	i

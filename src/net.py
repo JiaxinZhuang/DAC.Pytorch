@@ -1,7 +1,8 @@
 """net"""
 
 import sys
-#import math
+import math
+import torch
 import torch.nn as nn
 from torchsummary import summary
 
@@ -31,8 +32,24 @@ class Net:
 
     def get_model(self):
         """Get model"""
+        #TODO
+        self.print_model((1, 28, 28))
         return self.model
 
+    def reset_parameters(self):
+        """Reset parameters of the model
+        """
+        for module in self.model.modules():
+            if isinstance(module, nn.Conv2d):
+                # Kaiming normal distribution
+                fan_in = module.kernel_size[0] * module.kernel_size[1] * \
+                    module.out_channels
+                module.weight.data.normal_(0, math.sqrt(2. / fan_in))
+            elif isinstance(module, nn.BatchNorm2d):
+                module.weight.data.fill_(1)
+                module.bias.data.zero_()
+            elif isinstance(module, nn.Linear):
+                torch.nn.init.eye_(module.weight.data)
 
 class MNISTNetwork(nn.Module):
     """Mnist network"""
@@ -40,7 +57,7 @@ class MNISTNetwork(nn.Module):
         super(MNISTNetwork, self).__init__()
         self.config = config
         # Conv layers: 1, 2, 3
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3)
         self.conv1_bn = nn.BatchNorm2d(64)
         self.conv1_af = nn.ReLU()
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
@@ -69,8 +86,6 @@ class MNISTNetwork(nn.Module):
         self.conv7_af = nn.ReLU()
         self.avgpool = nn.AvgPool2d(kernel_size=(2, 2))
         self.avgpool_bn = nn.BatchNorm2d(10)
-
-
         # Linear
         self.linear1 = nn.Linear(10, 10)
         self.linear1_bn = nn.BatchNorm1d(10)

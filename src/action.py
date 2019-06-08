@@ -1,15 +1,16 @@
 """Action"""
 
 import sys
+import os
 import time
 import gc
 from functools import wraps
 
-from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import sklearn
+import sklearn.metrics
 import numpy as np
 
 sys.path.append("../ref")
@@ -17,52 +18,12 @@ from linear_assignment_ import linear_assignment
 
 
 class Action:
+    """Action
+    """
     def __init__(self, config: dict):
         super(Action, self).__init__()
         self.config = config
         self.optimizer = None
-
-    @time_this
-    def train_epoch(self, loader, model, loss_fn, optimizer, device):
-        """Train by epoch"""
-        losses = []
-
-        model.train()
-        for _, (data, target) in enumerate(tqdm(loader, ncols=70, desc="train")):
-            data, target = data.to(device), target.to(device)
-
-            optimizer.zero_grad()
-            predict = model(data)
-            loss = loss_fn(predict, target)
-            loss.backward()
-            optimizer.step()
-
-            losses.append(loss.item())
-
-        torch.cuda.empty_cache()
-        average_loss = np.mean(losses)
-        return average_loss
-
-    def eval_epoch(self, loader, model, loss_fn, optimizer, device):
-        """Evaluate by epoch"""
-        with torch.no_grad():
-            losses = []
-
-            model.eval()
-            predicted = []
-            targets = []
-            for _, (data, target) in enumerate(tqdm(loader, ncols=70, desc="eval")):
-                data, target = data.to(device), target.to(device)
-                predict = model(data)
-                loss = loss_fn(predict, target)
-                losses.append(loss.item())
-                targets.extend(target.cpu().numpy())
-                predicted.extend(predict.cpu().numpy())
-
-        torch.cuda.empty_cache()
-        average_loss = np.mean(losses)
-        metrics = get_metrics(targets, predicted)
-        return average_loss, metrics
 
     def plot_loss(self, tag, loss, epoch, writter):
         """Plot loss"""
@@ -73,36 +34,113 @@ class Action:
         for tag, metric in zip(tags, metrics):
             writter.add_scalar(tag, metrics[metric], epoch)
 
-    def get_optimizer(self, model):
+    def get_optimizer(self, model, learning_rate: float):
         """Get optimizer
-        Args:
-            model: model to be optimized
+        :param model:
+        :param learning_rate:
+        :return: optimizer
         """
-        learning_rate = self.config["learning_rate"]
         optimizer = torch.optim.RMSprop(model.parameters(), lr=learning_rate)
         return optimizer
 
     def get_loss_fn(self):
-        """Get loss function, Cross entropy"""
-        loss_fn_1 = nn.CrossEntropyLoss()
-        loss_fn_2 = nn.MSELoss()
-        return loss_fn_1, loss_fn_2
-
-    def get_distance(self, features, threshold):
-        """Get distance in cosine similarity with threshold
+        """Get loss function, Cross entropy
+        :return: loss function, mse
         """
-        device = features.device
-        similar = torch.tensor(1, device=device)
-        dissimilar = torch.tensor(0, device=device)
-        distance = F.cosine_similarity(features, features, dim=1, eps=1e-6)
-        distance = torch.where(distance > threshold, similar, dissimilar)
-        return distance
+        loss_fn = nn.MSELoss()
+        return loss_fn
+
+    def get_cos_similarity_distance(self, features):
+        """Get distance in cosine similarity
+        :param features: features of samples, (batch_size, num_clusters)
+        :return: distance matrix between features, (batch_size, batch_size)
+        """
+        cos_dist_matrix = F.cosine_similarity(features, features, dim=1,
+                                              eps=1e-6)
+        return cos_dist_matrix
+
+    def get_cos_similarity_by_threshold(self, cos_dist_matrix, threshold):
+        """Get similarity by threshold
+        :param cos_dist_matrix: cosine distance in matrix,
+        (batch_size, batch_size)
+        :param threshold: threshold, scalar
+        :return: distance matrix between features, (batch_size, batch_size)
+        """
+        device = cos_dist_matrix.device
+        dtype = cos_dist_matrix.dtype
+        similar = torch.tensor(1, dtype=dtype, device=device)
+        dissimilar = torch.tensor(0, dtype=dtype, device=device)
+        cos_dist_matrix = torch.where(cos_dist_matrix > threshold, similar,
+                                      dissimilar)
+        return cos_dist_matrix
+
+    def update_threshold(self, threshold: float, epoch: int):
+        """Update threshold
+        :param threshold: scalar
+        :param epoch: scalar
+        :return: new_threshold: scalar
+        """
+        n_epochs = self.config["n_epochs"]
+        if epoch % 5 == 0:
+            new_threshold = threshold - (0.9 - 0.4) / n_epochs
+        else:
+            new_threshold = threshold
+        print(">> new threshold is {}".format(threshold))
+        sys.stdout.flush()
+        return new_threshold
+
+    def save_model(self, model, optimizer, epoch, metrics, last=False):
+        """save model"""
+        (train_metric, val_metric) = metrics
+        acc = val_metric["acc"]
+        checkpoint = dict()
+        checkpoint['config'] = self.config
+        checkpoint['epoch'] = epoch
+        checkpoint['state_dict'] = model.state_dict()
+        checkpoint['optimizer'] = optimizer.state_dict()
+        checkpoint['train_metric'] = train_metric
+        checkpoint["val_metric"] = val_metric
+
+        model_name = "Exp{}-Epoch{}-Acc{:>5.2f}".format(
+            self.config['experiment_index'], epoch, acc*100.0)
+
+        model_dir = os.path.join(self.config['model_dir'],
+                                 self.config['experiment_index'])
+
+        if not last:
+            model_name = model_name + "-Best"
+            for f in os.listdir(model_dir):
+                if f.split('-')[-1] == 'Best':
+                    best_model_before = os.path.join(model_dir, f)
+                    os.remove(os.path.join(best_model_before))
+                    print('\n>> Delete best model before: {}'.\
+                            format(best_model_before), flush=True)
+        else:
+            model_name = model_name + "-Last"
+        model_path = os.path.join(model_dir, model_name)
+        torch.save(checkpoint, model_path)
+        print('>> Save best model: {}'.format(model_name), flush=True)
+
+    def get_metrics(self, y_true: list, y_pred: list):
+        """Get metrics"""
+        metrics = dict()
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        metrics["nmi"] = get_nmi(y_true, y_pred)
+        metrics["ari"] = get_ari(y_true, y_pred)
+        metrics["acc"], ind = get_acc(y_true, y_pred)
+        print("\n>> NMI:{:.4f}\tACC:{:.4f}\tARI:{:.4f}".format(metrics["nmi"],
+                                                             metrics["acc"],
+                                                             metrics["ari"]),
+                                                             flush=True)
+        return metrics
 
 def time_this(func, *args, **kwargs):
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
         ret = func(*args, **kwargs)
+        sys.stdout.flush()
         elapse = time.time() - start_time
         print(">> Function: {} costs {:.4f}s".format(func.__name__, elapse))
         sys.stdout.flush()
@@ -130,13 +168,6 @@ def str2bool(val):
         raise ValueError
     return value
 
-def get_metrics(y_true: np.ndarray, y_pred: np.ndarray):
-    """Get metrics"""
-    metrics = dict()
-    metrics["nmi"] = get_nmi(y_true, y_pred)
-    metrics["ari"] = get_ari(y_true, y_pred)
-    metrics["acc"] = get_acc(y_true, y_pred)
-    return metrics
 
 def get_nmi(y_true, y_pred):
     """Get normalized_mutual_info_score
@@ -164,26 +195,22 @@ def get_acc(y_true: np.ndarray, y_pred: np.ndarray):
     acc = sum([cost_maxtrix[x, y] for x, y in ind]) * 1.0 / y_pred.size
     return acc, ind
 
-#def pairwise_distances(x, y=None):
-#    """
-#    Input: x is a Nxd matrix
-#           y is an optional Mxd matirx
-#    Output: dist is a NxM matrix where dist[i,j] is the square norm
-#            between x[i,:] and y[j,:] if y is not given then use 'y=x'.
-#    i.e. dist[i,j] = ||x[i,:]-y[j,:]||^2
-#    """
-#    x_norm = (x ** 2).sum(1).view(-1, 1)
-#
-#    if y is not None:
-#        y_t = torch.transpose(y, 0, 1)
-#        y_norm = (y ** 2).sum(1).view(1, -1)
-#    else:
-#        y_t = torch.transpose(x, 0, 1)
-#        y_norm = x_norm.view(1, -1)
-#
-#    dist = x_norm + y_norm - 2.0 * torch.mm(x, y_t)
-#    # Ensure diagonal is zero if x=y
-#    if y is None:
-#        dist = dist - torch.diag(dist)
-#
-#    return torch.clamp(dist, 0.0, np.inf)
+class AverageMeter:
+    """
+    Keeps track of most recent, average, sum, and count of a metric.
+    """
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
