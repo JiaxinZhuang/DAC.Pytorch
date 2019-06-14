@@ -1,10 +1,16 @@
 """Datasets"""
 import sys
+import os
 
 import torch
 from torch.utils.data import DataLoader
 import torchvision
 from torchvision import transforms
+import h5py
+import numpy as np
+import PIL
+
+from action import time_this
 
 
 class Dataset:
@@ -12,7 +18,10 @@ class Dataset:
     def __init__(self, config):
         self.config = config
 
+        self.data_dir = self.config["data_dir"]
         self.dataset = self.config["dataset"]
+        self.filepath = os.path.join(self.data_dir, "datasets.hdf5")
+        self.num_samples = None
         self.img_channel = None
         self.img_row = None
         self.img_col = None
@@ -23,8 +32,6 @@ class Dataset:
     def load_data(self):
         """Load specific dataset"""
         if self.dataset == "mnist":
-            self.img_channel = 1
-            self.img_row, self.img_col = 28, 28
             train_dataset, valid_dataset, targets_uniq = self._load_mnist()
         else:
             print(">> Error: No datasets available")
@@ -33,31 +40,46 @@ class Dataset:
 
     def _load_mnist(self):
         """Load mnist"""
-        mean, std = 0.1307, 0.3081
+        mean, std = 0.13092539, 0.3084483
 
-        train_transform = transforms.Compose([
-            transforms.RandomAffine(degrees=10,
-                                    translate=(0.1, 0.1),
-                                    scale=(0.95, 1.05)),
-            transforms.ToTensor(),
-            transforms.Normalize((mean,), (std,))])
-        valid_transform = transforms.Compose([
+        train_transforms = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((mean,), (std,))])
 
-        train_dataset = torchvision.datasets.MNIST(
-            '../data',
-            train=True,
-            download=False,
-            transform=train_transform)
-        valid_dataset = torchvision.datasets.MNIST(
-            '../data',
-            train=False,
-            download=False,
-            transform=valid_transform)
+        valid_transforms = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((mean,), (std,))])
 
+        key = self.dataset
+        data, targets = self.read_hdf(self.filepath, key)
+        train_dataset = \
+            SimpleDataset(data, targets, transform=train_transforms)
+        valid_dataset = \
+            SimpleDataset(data, targets, transform=valid_transforms)
         targets_uniq = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         return train_dataset, valid_dataset, targets_uniq
+
+    @time_this
+    def read_hdf(self, filepath: str, key:str):
+        """Read hdf from filepath+key
+        :param filepath: str
+        :param key: name of dataset
+        :return: data: (samples, channels, height, width)
+        :return: targets: (samples)
+        """
+        with h5py.File(filepath, "r") as datasets:
+            dataset = datasets[key]
+            data = np.array(dataset["data"])
+            targets = np.array(dataset["targets"])
+
+        self.num_samples = data.shape[0]
+        self.img_channel = data.shape[3]
+        self.img_row, self.img_col = data.shape[1], data.shape[2]
+        print(">> Read datasets from {}".format(filepath), flush=True)
+        print(">> It has {} samples with channels:{}, height:{}, width:{}".\
+                format(self.num_samples, self.img_channel, self.img_row,
+                       self.img_col), flush=True)
+        return data, targets
 
     def get_dataloader(self):
         """return dataloader for agent
@@ -73,45 +95,84 @@ class Dataset:
             self.train_dataset,
             batch_size=batch_size,
             shuffle=True,
+            pin_memory=True,
             num_workers=num_workers)
         valid_loader = torch.utils.data.DataLoader(
             self.valid_dataset,
             batch_size=batch_size,
             shuffle=False,
+            pin_memory=True,
             num_workers=num_workers)
         return train_loader, valid_loader
 
+    def get_data_with_local_batch_size(self, data, batch_size):
+        num_workers = self.config["num_workers"]
+        data = data.cpu()
+        transform = transforms.Compose([
+            torchvision.transforms.ToPILImage(),
+            transforms.RandomAffine(degrees=[-10, 10],
+                                    translate=[0.1, 0.1],
+                                    scale=[0.95, 1.05],
+                                    resample=PIL.Image.NEAREST),
+            lambda x: self.rescale_op(x),
+            transforms.ToTensor(),
+            ])
+        small_dataset = smallDataset(data=data, transform=transform)
+        loader = torch.utils.data.DataLoader(small_dataset,
+                                             batch_size=batch_size,
+                                             shuffle=True,
+                                             num_workers=num_workers)
+        return loader
 
-        #mean = 0.13092537
-        #std = 0.30844885
-        #train_transform = transforms.Compose([
-        #    transforms.RandomAffine(degrees=10,
-        #                            translate=(0.1, 0.1),
-        #                            scale=(0.95, 1.05)),
-        #    transforms.ToTensor(),
-        #    transforms.Normalize((mean,), (std,))
-        #    ])
-        #val_transform = transforms.Compose([
-        #    transforms.ToTensor(),
-        #    transforms.Normalize((mean,), (std,))
-        #    ])
+    def rescale_op(self, img):
+        """Rescale
+        :param imgs: PIL image
+        """
+        out = img.point(lambda i: i * 0.975)
+        return out
 
-        #dataset_part1 = torchvision.datasets.MNIST('../data', train=True,
-        #                                           download=True)
-        #dataet_part2 = torchvision.datasets.MNIST('../data', train=False,
-        #                                           download=True)
-        #train_data1, train_targets1 = dataset_part1.data, dataset_part1.target
-        #train_data2, train_targets2 = dataset_part2.data, dataset_part2.target
-        #train_data = np.vstack((train_data1, train_data2))
-        #train_target =
+class SimpleDataset(torch.utils.data.Dataset):
+    """Simple Dataset
+    """
+    def __init__(self, data: np.ndarray, targets: np.ndarray, transform):
+        """Init
+        """
+        self.data = data
+        self.targets = targets
+        self.transform = transform
+        super(SimpleDataset, self).__init__()
 
-        #val_dataset = torchvision.datasets.MNIST('../data', train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-        #train_dataset =
+    def __getitem__(self, index):
+        """Get item
+        """
+        img = self.data[index]
+        target = self.targets[index]
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, target
 
+    def __len__(self):
+        """Len
+        """
+        return len(self.targets)
 
+class smallDataset(torch.utils.data.Dataset):
+    """For local repeat and shuffle data
+    """
+    def __init__(self, data, transform):
+        self.data = data
+        self.transform = transform
 
+    def __len__(self):
+        return len(self.data)
 
-
+    def __getitem__(self, index):
+        """Get item
+        """
+        img = self.data[index]
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, index
 
 class DataPrefetcher:
     """Prefetch data each iteration, may use
@@ -157,3 +218,18 @@ class DataPrefetcher:
         target = self.next_target
         self.preload()
         return inputs, target
+
+
+def get_mean_std(dataset, ratio=0.01):
+    """sample with ratio to calculate mean and std
+    img has (sampels, channels, height, width)
+    """
+    batch_size = len(dataset) * ratio
+    dataloader = torch.utils.data.DataLoader(dataset,
+                                             batch_size=batch_size,
+                                             shuffle=True,
+                                             num_workers=2)
+    train = iter(dataloader).next()
+    mean = np.mean(train.numpy(), axis=(0, 2, 3))
+    std = np.std(train.numpy(), axis=(0, 2, 3))
+    return mean, std

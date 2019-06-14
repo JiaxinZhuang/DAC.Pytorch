@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import sklearn
 import sklearn.metrics
 import numpy as np
+from numba import jit
 
 sys.path.append("../ref")
 from linear_assignment_ import linear_assignment
@@ -25,14 +26,17 @@ class Action:
         self.config = config
         self.optimizer = None
 
-    def plot_loss(self, tag, loss, epoch, writter):
+    def plot_loss(self, loss, epoch, writer, is_train: bool):
         """Plot loss"""
-        writter.add_scalar(tag, loss, epoch)
+        prefixed = "Train/" if is_train else "Val/"
+        writer.add_scalar(prefixed + "loss", loss, epoch)
 
-    def plot_metrics(self, tags: list, metrics: dict, epoch: int, writter):
+    def plot_metrics(self, metrics: dict, epoch: int, writer, is_train: bool):
         """Plot metrics"""
+        tags = ["nmi", "ari", "acc"]
+        prefixed = "Train/" if is_train else "Val/"
         for tag, metric in zip(tags, metrics):
-            writter.add_scalar(tag, metrics[metric], epoch)
+            writer.add_scalar(prefixed + tag, metrics[metric], epoch)
 
     def get_optimizer(self, model, learning_rate: float):
         """Get optimizer
@@ -40,14 +44,15 @@ class Action:
         :param learning_rate:
         :return: optimizer
         """
-        optimizer = torch.optim.RMSprop(model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.RMSprop(model.parameters(), lr=learning_rate,
+                                        alpha=0.9)
         return optimizer
 
     def get_loss_fn(self):
         """Get loss function, Cross entropy
         :return: loss function, mse
         """
-        loss_fn = nn.MSELoss()
+        loss_fn = nn.MSELoss(reduction="mean")
         return loss_fn
 
     def get_cos_similarity_distance(self, features):
@@ -55,8 +60,12 @@ class Action:
         :param features: features of samples, (batch_size, num_clusters)
         :return: distance matrix between features, (batch_size, batch_size)
         """
-        cos_dist_matrix = F.cosine_similarity(features, features, dim=1,
-                                              eps=1e-6)
+        # (batch_size, num_clusters)
+        features_norm = torch.norm(features, dim=1, keepdim=True)
+        # (batch_size, num_clusters)
+        features = features / features_norm
+        # (batch_size, batch_size)
+        cos_dist_matrix = torch.mm(features, features.transpose(0, 1))
         return cos_dist_matrix
 
     def get_cos_similarity_by_threshold(self, cos_dist_matrix, threshold):
@@ -70,9 +79,26 @@ class Action:
         dtype = cos_dist_matrix.dtype
         similar = torch.tensor(1, dtype=dtype, device=device)
         dissimilar = torch.tensor(0, dtype=dtype, device=device)
-        cos_dist_matrix = torch.where(cos_dist_matrix > threshold, similar,
-                                      dissimilar)
-        return cos_dist_matrix
+        sim_matrix = torch.where(cos_dist_matrix > threshold, similar,
+                                 dissimilar)
+        return sim_matrix
+
+    def get_generated_targets(self, model, data, threshold):
+        """Get generated labels by threshold
+        :param model: model
+        :param data: (batch_size, channels, height, width)
+        :return: data: (batch_size, num_clusters)
+        """
+        with torch.no_grad():
+            model.eval()
+            # (batch_size, num_clusters)
+            features = model(data)
+            # (batch_size, batch_size)
+            dist_matrix = self.get_cos_similarity_distance(features)
+            # (batch_size, batch_size)
+            sim_matrix = self.get_cos_similarity_by_threshold(dist_matrix,
+                                                              threshold)
+            return sim_matrix
 
     def update_threshold(self, threshold: float, epoch: int):
         """Update threshold
@@ -81,24 +107,22 @@ class Action:
         :return: new_threshold: scalar
         """
         n_epochs = self.config["n_epochs"]
-        if epoch % 5 == 0:
-            new_threshold = threshold - (0.9 - 0.4) / n_epochs
+        if epoch != 1:
+            new_threshold = threshold - (0.9 - 0.5) / n_epochs
         else:
             new_threshold = threshold
-        print(">> new threshold is {}".format(threshold))
-        sys.stdout.flush()
+        print(">>> new threshold is {}".format(new_threshold), flush=True)
         return new_threshold
 
     def save_model(self, model, optimizer, epoch, metrics, last=False):
         """save model"""
-        (train_metric, val_metric) = metrics
+        val_metric = metrics
         acc = val_metric["acc"]
         checkpoint = dict()
         checkpoint['config'] = self.config
         checkpoint['epoch'] = epoch
         checkpoint['state_dict'] = model.state_dict()
         checkpoint['optimizer'] = optimizer.state_dict()
-        checkpoint['train_metric'] = train_metric
         checkpoint["val_metric"] = val_metric
 
         model_name = "Exp{}-Epoch{}-Acc{:>5.2f}".format(
@@ -113,7 +137,7 @@ class Action:
                 if f.split('-')[-1] == 'Best':
                     best_model_before = os.path.join(model_dir, f)
                     os.remove(os.path.join(best_model_before))
-                    print('\n>> Delete best model before: {}'.\
+                    print('>> Delete best model before: {}'.\
                             format(best_model_before), flush=True)
         else:
             model_name = model_name + "-Last"
@@ -126,13 +150,14 @@ class Action:
         metrics = dict()
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
+        assert y_true.shape == y_pred.shape
         metrics["nmi"] = get_nmi(y_true, y_pred)
         metrics["ari"] = get_ari(y_true, y_pred)
         metrics["acc"], ind = get_acc(y_true, y_pred)
-        print("\n>> NMI:{:.4f}\tACC:{:.4f}\tARI:{:.4f}".format(metrics["nmi"],
-                                                             metrics["acc"],
-                                                             metrics["ari"]),
-                                                             flush=True)
+        print(">>> NMI:{:.4f}\tARI:{:.4f}\tACC:{:.4f}".format(metrics["nmi"],
+                                                              metrics["ari"],
+                                                              metrics["acc"]),
+                                                              flush=True)
         return metrics
 
 def time_this(func, *args, **kwargs):
@@ -142,7 +167,8 @@ def time_this(func, *args, **kwargs):
         ret = func(*args, **kwargs)
         sys.stdout.flush()
         elapse = time.time() - start_time
-        print(">> Function: {} costs {:.4f}s".format(func.__name__, elapse))
+        print(">> Function: {} costs {:.4f}s".format(func.__name__, elapse),
+              flush=True)
         sys.stdout.flush()
         return ret
     return wrapper
@@ -152,7 +178,8 @@ def gcollect(func, *args, **kwargs):
     def wrapper(*args, **kwargs):
         ret = func(*args, **kwargs)
         gc.collect()
-        print(">> Function: {} has been garbage collected".format(func.__name__))
+        print(">> Function: {} has been garbage collected".\
+            format(func.__name__), flush=True)
         sys.stdout.flush()
         return ret
     return wrapper
@@ -168,11 +195,12 @@ def str2bool(val):
         raise ValueError
     return value
 
-
 def get_nmi(y_true, y_pred):
     """Get normalized_mutual_info_score
     """
-    return sklearn.metrics.normalized_mutual_info_score(y_true, y_pred)
+    nmi = sklearn.metrics.normalized_mutual_info_score(\
+        y_true, y_pred, average_method="arithmetic")
+    return nmi
 
 def get_ari(y_true, y_pred):
     """Get metrics.adjusted_rand_score

@@ -1,2 +1,5 @@
 /data/*
 /saved/*
+*.pyc
+tags
+/src/__pycache__/*

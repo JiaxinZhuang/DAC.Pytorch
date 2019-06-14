@@ -13,6 +13,7 @@ class Net:
         self.config = config
         self.model = None
         self._init_model()
+        self.reset_parameters()
 
     def _init_model(self):
         """Init model"""
@@ -28,7 +29,7 @@ class Net:
         """print model struture given input size eg. (1, 32, 32)
         """
         assert len(input_size) == 3
-        summary(self.model, input_size)
+        summary(self.model, input_size, device="cpu")
 
     def get_model(self):
         """Get model"""
@@ -45,53 +46,76 @@ class Net:
                 fan_in = module.kernel_size[0] * module.kernel_size[1] * \
                     module.out_channels
                 module.weight.data.normal_(0, math.sqrt(2. / fan_in))
+                module.bias.data.zero_()
+                print(">> Reset parameter {}".format(module), flush=True)
             elif isinstance(module, nn.BatchNorm2d):
                 module.weight.data.fill_(1)
                 module.bias.data.zero_()
+                print(">> Reset parameter {}".format(module), flush=True)
+            elif isinstance(module, nn.BatchNorm1d):
+                module.weight.data.fill_(1)
+                module.bias.data.zero_()
+                print(">> Reset parameter {}".format(module), flush=True)
             elif isinstance(module, nn.Linear):
                 torch.nn.init.eye_(module.weight.data)
+                module.bias.data.zero_()
+                print(">> Reset parameter {}".format(module), flush=True)
 
 class MNISTNetwork(nn.Module):
     """Mnist network"""
     def __init__(self, config: dict):
         super(MNISTNetwork, self).__init__()
         self.config = config
+        bn_track_running_stats = self.config["track_running_stats"]
+        bn_momentum = 0.01
         # Conv layers: 1, 2, 3
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3)
-        self.conv1_bn = nn.BatchNorm2d(64)
+        self.conv1_bn = nn.BatchNorm2d(64, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv1_af = nn.ReLU()
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
-        self.conv2_bn = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+        self.conv2_bn = nn.BatchNorm2d(64, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv2_af = nn.ReLU()
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
-        self.conv3_bn = nn.BatchNorm2d(64)
+        self.conv3_bn = nn.BatchNorm2d(64, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv3_af = nn.ReLU()
         self.maxpool1 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.maxpool1_bn = nn.BatchNorm2d(64)
+        self.maxpool1_bn = nn.BatchNorm2d(64, momentum=bn_momentum,
+                                          track_running_stats=bn_track_running_stats)
         # Conv Layers: 4, 5, 6
         self.conv4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
-        self.conv4_bn = nn.BatchNorm2d(128)
+        self.conv4_bn = nn.BatchNorm2d(128, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv4_af = nn.ReLU()
         self.conv5 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3)
-        self.conv5_bn = nn.BatchNorm2d(128)
+        self.conv5_bn = nn.BatchNorm2d(128, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv5_af = nn.ReLU()
         self.conv6 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3)
-        self.conv6_bn = nn.BatchNorm2d(128)
+        self.conv6_bn = nn.BatchNorm2d(128, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv6_af = nn.ReLU()
         self.maxpool2 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.maxpool2_bn = nn.BatchNorm2d(128)
+        self.maxpool2_bn = nn.BatchNorm2d(128, momentum=bn_momentum,
+                                          track_running_stats=bn_track_running_stats)
         # Conv Layers: 7
         self.conv7 = nn.Conv2d(in_channels=128, out_channels=10, kernel_size=1)
-        self.conv7_bn = nn.BatchNorm2d(10)
+        self.conv7_bn = nn.BatchNorm2d(10, momentum=bn_momentum,
+                                       track_running_stats=bn_track_running_stats)
         self.conv7_af = nn.ReLU()
         self.avgpool = nn.AvgPool2d(kernel_size=(2, 2))
-        self.avgpool_bn = nn.BatchNorm2d(10)
+        self.avgpool_bn = nn.BatchNorm2d(10, momentum=bn_momentum,
+                                         track_running_stats=bn_track_running_stats)
         # Linear
         self.linear1 = nn.Linear(10, 10)
-        self.linear1_bn = nn.BatchNorm1d(10)
+        self.linear1_bn = nn.BatchNorm1d(10, momentum=bn_momentum,
+                                         track_running_stats=bn_track_running_stats)
         self.linear1_af = nn.ReLU()
         self.linear2 = nn.Linear(10, 10)
-        self.linear2_bn = nn.BatchNorm1d(10)
+        self.linear2_bn = nn.BatchNorm1d(10, momentum=bn_momentum,
+                                         track_running_stats=bn_track_running_stats)
         self.linear2_af = nn.ReLU()
 
         self.softmax = nn.Softmax(dim=1)
@@ -99,6 +123,7 @@ class MNISTNetwork(nn.Module):
     def forward(self, x):
         """Forward"""
         # Conv Layers 1-7, Conv-Bn-ReLU
+        # Details between the input and output shape, using self.print_model
         out = self.conv1(x)
         out = self.conv1_bn(out)
         out = self.conv1_af(out)
@@ -113,7 +138,6 @@ class MNISTNetwork(nn.Module):
 
         out = self.conv4(out)
         out = self.conv4_bn(out)
-        out = self.conv4_af(out)
         out = self.conv4_af(out)
         out = self.conv5(out)
         out = self.conv5_bn(out)

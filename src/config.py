@@ -2,7 +2,7 @@
 
 import argparse
 
-#from action import str2bool
+from action import str2bool
 
 class Config:
     """Config
@@ -32,6 +32,7 @@ class Config:
         self.config['cuda'] = self.args.cuda
         self.config["num_workers"] = self.args.num_workers
 
+        self.config["data_dir"] = self.args.data_dir
         self.config['dataset'] = self.args.dataset
 
         self.config["learning_rate"] = self.args.learning_rate
@@ -47,6 +48,9 @@ class Config:
     def _load_special_setting(self):
         self.config["upper_threshold"] = self.args.upper_threshold
         self.config["num_clusters"] = self.args.num_clusters
+        self.config["local_nepochs"] = self.args.local_nepochs
+        self.config["local_batch_size"] = self.args.local_batch_size
+        self.config["track_running_stats"] = self.args.track_running_stats
 
     def _add_default_setting(self):
         # need defined each time
@@ -57,18 +61,21 @@ class Config:
         self.parser.add_argument("--num_workers", default=2, type=int,
                                  help="num_workers of dataloader")
 
+        self.parser.add_argument("--data_dir", default="../data", type=str,
+                                 help="data directory, where to store datasets")
         self.parser.add_argument('--dataset', default="mnist", type=str,
                                  help="mnist, cifar10, cifar100")
 
         self.parser.add_argument("--learning_rate", default=1e-3, type=float,
                                  help="learning rate")
-        self.parser.add_argument("--batch_size", default=128, type=int,
+        self.parser.add_argument("--batch_size", default=1000, type=int,
                                  help="batch size of each epoch")
         self.parser.add_argument("--n_epochs", default=20, type=int,
                                  help="n epochs to train")
 
-        self.parser.add_argument('--seed', default=47, type=int,
-                                 help="Random seed for pytorch and Numpy ")
+        self.parser.add_argument('--seed', default=1337, type=int,
+                                 help="Random seed for pytorch and Numpy,\
+                                 -1 means not to set random seed")
 
         self.parser.add_argument("--eval_frequency", default=1, type=int,
                                  help="Eval train and test frequency")
@@ -83,6 +90,14 @@ class Config:
                                  help="init upper threshold")
         self.parser.add_argument("--num_clusters", default=10, type=int,
                                  help="numbers of clusters")
+        self.parser.add_argument("--local_nepochs", default=5, type=int,
+                                 help="repeat train in each local iteration")
+        self.parser.add_argument("--local_batch_size", default=128, type=int,
+                                 help="Local batch size for inner iteration,\
+                                      repeatedly")
+        self.parser.add_argument("--track_running_stats", default=True,
+                                 type=str2bool, help="track_running_stats for\
+                                 batch normalization in network")
 
     def print_config(self):
         """print config
