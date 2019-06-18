@@ -33,6 +33,8 @@ class Dataset:
         """Load specific dataset"""
         if self.dataset == "mnist":
             train_dataset, valid_dataset, targets_uniq = self._load_mnist()
+        elif self.dataset == "cifar10":
+            train_dataset, valid_dataset, targets_uniq = self._load_cifar10()
         else:
             print(">> Error: No datasets available")
             sys.exit(-1)
@@ -40,7 +42,31 @@ class Dataset:
 
     def _load_mnist(self):
         """Load mnist"""
+        # calculate using gen_mean_std when generating datasets
         mean, std = 0.13092539, 0.3084483
+
+        train_transforms = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((mean,), (std,))])
+
+        valid_transforms = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((mean,), (std,))])
+
+        key = self.dataset
+        data, targets = self.read_hdf(self.filepath, key)
+        train_dataset = \
+            SimpleDataset(data, targets, transform=train_transforms)
+        valid_dataset = \
+            SimpleDataset(data, targets, transform=valid_transforms)
+        targets_uniq = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        return train_dataset, valid_dataset, targets_uniq
+
+    def _load_cifar10(self):
+        """Load cifar10"""
+        # calculate using gen_mean_std when generating datasets
+        mean, std = (0.50764906, 0.46386194, 0.45018676), \
+            (0.26785395, 0.24093068, 0.24120948)
 
         train_transforms = transforms.Compose([
             transforms.ToTensor(),
@@ -100,23 +126,24 @@ class Dataset:
         valid_loader = torch.utils.data.DataLoader(
             self.valid_dataset,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             pin_memory=True,
             num_workers=num_workers)
         return train_loader, valid_loader
 
     def get_data_with_local_batch_size(self, data, batch_size):
         num_workers = self.config["num_workers"]
-        data = data.cpu()
-        transform = transforms.Compose([
-            torchvision.transforms.ToPILImage(),
-            transforms.RandomAffine(degrees=[-10, 10],
-                                    translate=[0.1, 0.1],
-                                    scale=[0.95, 1.05],
-                                    resample=PIL.Image.NEAREST),
-            lambda x: self.rescale_op(x),
-            transforms.ToTensor(),
-            ])
+        #data = data.cpu()
+        #transform = transforms.Compose([
+        #    torchvision.transforms.ToPILImage(),
+        #    transforms.RandomAffine(degrees=[-10, 10],
+        #                            translate=[0.1, 0.1],
+        #                            scale=[0.95, 1.05],
+        #                            resample=PIL.Image.NEAREST),
+        #    lambda x: self.rescale_op(x),
+        #    transforms.ToTensor(),
+        #    ])
+        transform = None
         small_dataset = smallDataset(data=data, transform=transform)
         loader = torch.utils.data.DataLoader(small_dataset,
                                              batch_size=batch_size,

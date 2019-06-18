@@ -8,14 +8,11 @@ from functools import wraps
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import sklearn
 import sklearn.metrics
 import numpy as np
-from numba import jit
 
-sys.path.append("../ref")
-from linear_assignment_ import linear_assignment
+from utils.linear_assignment_ import linear_assignment
 
 
 class Action:
@@ -52,8 +49,22 @@ class Action:
         """Get loss function, Cross entropy
         :return: loss function, mse
         """
-        loss_fn = nn.MSELoss(reduction="mean")
+        dataset = self.config["dataset"]
+        if dataset == "mnist":
+            loss_fn = nn.MSELoss(reduction="mean")
+        elif dataset == "cifar10":
+            pass
+            #TODO
         return loss_fn
+
+    def compute_loss(self, loss_fn: list, predictions: list, targets: list):
+        """Compute loss according datasets
+        :param loss_fn: list of loss_fn, may contain multiple kind of loss
+        :param predictions: list of predictions
+        :param loss_fn: list of targets
+        :return: loss function, ms
+        """
+        #TODO
 
     def get_cos_similarity_distance(self, features):
         """Get distance in cosine similarity
@@ -106,11 +117,27 @@ class Action:
         :param epoch: scalar
         :return: new_threshold: scalar
         """
+        dataset = self.config["dataset"]
         n_epochs = self.config["n_epochs"]
+        upper_threshold = self.config["upper_threshold"]
+        lower_threshold = self.config["lower_threshold"]
+        diff = upper_threshold - lower_threshold
+
+        # decay rate for different datasets
+        if dataset == "mnist":
+            eta = diff / n_epochs
+        elif dataset == "cifar10":
+            eta = diff / (n_epochs * 2)
+        else:
+            print(">>Error: Bad datasets: {}".format(dataset))
+            sys.exit(-1)
+
+        # First epoch doesn't update threshold
         if epoch != 1:
-            new_threshold = threshold - (0.9 - 0.5) / n_epochs
+            new_threshold = threshold - eta
         else:
             new_threshold = threshold
+
         print(">>> new threshold is {}".format(new_threshold), flush=True)
         return new_threshold
 

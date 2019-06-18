@@ -47,6 +47,7 @@ class Config:
 
     def _load_special_setting(self):
         self.config["upper_threshold"] = self.args.upper_threshold
+        self.config["lower_threshold"] = self.args.lower_threshold
         self.config["num_clusters"] = self.args.num_clusters
         self.config["local_nepochs"] = self.args.local_nepochs
         self.config["local_batch_size"] = self.args.local_batch_size
@@ -88,6 +89,8 @@ class Config:
     def _add_special_setting(self):
         self.parser.add_argument("--upper_threshold", default=0.9, type=float,
                                  help="init upper threshold")
+        self.parser.add_argument("--lower_threshold", default=0.5, type=float,
+                                 help="init lower threshold")
         self.parser.add_argument("--num_clusters", default=10, type=int,
                                  help="numbers of clusters")
         self.parser.add_argument("--local_nepochs", default=5, type=int,

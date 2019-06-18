@@ -1,15 +1,12 @@
 """Agent"""
 
 import os
-import sys
 import shutil
 
 import torch
 import numpy as np
 from tensorboardX import SummaryWriter
-#from tqdm import tqdm
 
-from config import Config
 from dataset import Dataset
 from net import Net
 from action import Action, time_this
@@ -18,14 +15,17 @@ from action import Action, time_this
 class Agent:
     """Agent controls training and testing model
     """
-    def __init__(self):
-        self.config = Config().get_config()
+    def __init__(self, config: dict):
+        super(Agent, self).__init__()
+
+        self.config = config
         self.log_dir = os.path.join(self.config['log_dir'],
                                     self.config['experiment_index'])
         self.model_dir = os.path.join(self.config['model_dir'],
                                       self.config['experiment_index'])
+        self.device = torch.device("cuda:0" if torch.cuda.is_available()
+                                   else "cpu")
 
-        self.device = None
         self.set_environment()
 
         self.dataset = Dataset(self.config)
@@ -37,6 +37,19 @@ class Agent:
         self.best_acc = 0.0
         self.best_metrics = None # rely on val_metrics to be best
 
+    def set_environment(self):
+        """Set environment, eg. del and create file
+        """
+        # remove and create logdir
+        if os.path.exists(self.log_dir):
+            shutil.rmtree(self.log_dir)
+        os.mkdir(self.log_dir)
+
+        # remove and create modeldir
+        if os.path.exists(self.model_dir):
+            shutil.rmtree(self.model_dir)
+        os.mkdir(self.model_dir)
+
     def run(self):
         """Iterative trainig and evaluate model"""
 
@@ -47,9 +60,9 @@ class Agent:
         optimizer = self.action.get_optimizer(model, learning_rate)
         loss_fn = self.action.get_loss_fn().to(self.device)
 
-        self.main(train_loader, val_loader, model, loss_fn, optimizer)
+        self.fit(train_loader, val_loader, model, loss_fn, optimizer)
 
-    def main(self, train_loader, val_loader, model, loss_fn, optimizer):
+    def fit(self, train_loader, val_loader, model, loss_fn, optimizer):
         """Run model"""
         n_epochs = self.config["n_epochs"]
         exp = self.config["experiment_index"]
@@ -65,7 +78,7 @@ class Agent:
 
         for epoch in range(1, n_epochs+1):
             print("\n>> Exp: {} -> Train at Epoch {}/{}".format(exp, epoch, \
-                n_epochs), flush=True)
+                  n_epochs), flush=True)
 
             threshold = self.action.update_threshold(threshold, epoch)
 
@@ -94,36 +107,9 @@ class Agent:
         self.action.save_model(model, optimizer, n_epochs, last_metrics,
                                last=True)
 
-    @time_this
-    def set_environment(self):
-        """set environment"""
-        os.environ['CUDA_VISIBLE_DEVICES'] = self.config['cuda']
-        self.device = torch.device("cuda:0" if torch.cuda.is_available()
-                                   else "cpu")
-
-        # set random seed
-        seed = self.config["seed"]
-        if seed != -1:
-            torch.manual_seed(seed)
-            np.random.seed(seed)
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
-        else:
-            print(">> Not to seed random seed")
-
-        # remove and create logdir
-        if os.path.exists(self.log_dir):
-            shutil.rmtree(self.log_dir)
-        os.mkdir(self.log_dir)
-
-        # remove and create modeldir
-        if os.path.exists(self.model_dir):
-            shutil.rmtree(self.model_dir)
-        os.mkdir(self.model_dir)
 
     @time_this
-    def train_epoch(self, train_loader, model, loss_fn, optimizer,
-                    threshold):
+    def train_epoch(self, train_loader, model, loss_fn, optimizer, threshold):
         """Train by epoch
         """
         local_nepochs = self.config["local_nepochs"]

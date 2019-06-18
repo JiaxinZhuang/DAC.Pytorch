@@ -27,4 +27,5 @@ python main.py \
     --upper_threshold=0.9 \
     --seed=1337 \
     --track_running_stats=False \
+    --local_nepochs=1 \
     2>&1 | tee $log_file
