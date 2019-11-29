@@ -1,9 +1,9 @@
 # Deep Adaptive Image Clustering (DAC)
 ***
 
-**New**: Pytorch version of DAC has been re-implemented on MNIST [2019/11/29], and will updated in the near future. 
+**News**: Pytorch version of DAC has been re-implemented on MNIST [2019/11/29], and will updated in the near future. 
 
-Pytorch Implementation of  Deep Adaptive Image Clustering. Since **NO OFFICIAL** version of Pytorch provided, i implemenent **my pytorch version** with the help of [DAC Tensorflow](https://github.com/vector-1127/DAC) from author and setting in the paper [Deep Adaptive Image Clustering](http://openaccess.thecvf.com/content_ICCV_2017/papers/Chang_Deep_Adaptive_Image_ICCV_2017_paper.pdf) .
+Pytorch Implementation of  Deep Adaptive Image Clustering. Since **NO OFFICIAL** version of Pytorch provided, i implemenent **MY PYTORCH VERSION** with the help of [DAC Tensorflow](https://github.com/vector-1127/DAC) from author and setting in the paper [Deep Adaptive Image Clustering](http://openaccess.thecvf.com/content_ICCV_2017/papers/Chang_Deep_Adaptive_Image_ICCV_2017_paper.pdf) .
 
 !! Something **confusing**: Although i could reprodce the result reported in paper on MNIST dataset,  i could not achieve the same thing on Cifar. Even i ran tensorflow version provided by author, so did it. If anyone can reproduce result on Cifar10, plz contact me ~!!
 
