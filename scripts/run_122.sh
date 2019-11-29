@@ -21,11 +21,10 @@ python main.py \
     --experiment_index=$experiment_index \
     --cuda=0 \
     --dataset=mnist \
-    --n_epochs=20 \
+    --n_epochs=200 \
     --num_workers=0 \
     --eval_frequency=1 \
     --upper_threshold=0.9 \
-    --seed=1337 \
+    --seed=-1 \
     --track_running_stats=False \
-    --local_nepochs=1 \
     2>&1 | tee $log_file

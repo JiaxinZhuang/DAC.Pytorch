@@ -20,7 +20,7 @@ class Dataset:
 
         self.data_dir = self.config["data_dir"]
         self.dataset = self.config["dataset"]
-        self.filepath = os.path.join(self.data_dir, "datasets.hdf5")
+        self.filepath = os.path.join(self.data_dir, self.dataset + ".hdf5")
         self.num_samples = None
         self.img_channel = None
         self.img_row = None

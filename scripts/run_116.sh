@@ -17,9 +17,9 @@ experiment_index=${file_name##*_}
 experiment_index=${experiment_index%%.*}
 log_file=$log_dir$experiment_index
 
-python main.py \
+python -u main.py \
     --experiment_index=$experiment_index \
-    --cuda=7 \
+    --cuda=0 \
     --dataset=mnist \
     --n_epochs=20 \
     --num_workers=0 \

@@ -9,7 +9,7 @@ log_file=$log_dir$experiment_index
 
 python main.py \
     --experiment_index=$experiment_index \
-    --cuda=3 \
+    --cuda=0 \
     --dataset=mnist \
     --n_epochs=20 \
     --num_workers=0 \
