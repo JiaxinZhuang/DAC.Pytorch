@@ -50,7 +50,7 @@ ACC, NMI, and ARI on MNIST can be achieved very closely to what reported in pape
 
 My implementation can reach 96.68(ACC), 93.49(ARI), 93.7(NMI) within 20 epochs. Details can be found in *scripts* directory. You can also download logfile and models from [Google Drviver](https://drive.google.com/open?id=1d-8J6naXTE3d04f6ORO4qntycyib-nSW). 
 
-![Result](/Users/lincolnzjx/Desktop/DAC_Pytorch/Result.png)
+![Result](./Result.png)
 
 
 

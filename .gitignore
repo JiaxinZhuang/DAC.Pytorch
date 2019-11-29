@@ -3,4 +3,6 @@
 *.pyc
 tags
 /src/__pycache__/*
-
+/tmp/Untitled.ipynb
+/tmp/Test-Function.ipynb
+/scripts/old/*
